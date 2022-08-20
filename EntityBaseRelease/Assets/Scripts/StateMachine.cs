@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 class StateMachine
 {
-    public int State
+    public int state
     {
         get
         {
