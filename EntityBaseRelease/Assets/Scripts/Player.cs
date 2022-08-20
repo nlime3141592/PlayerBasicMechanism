@@ -8,23 +8,23 @@ public class Player : Entity
     #region Player Constants
 
     // All Available Player States
-    private const int stIdleBasic           = 0;
-    private const int stIdleLong            = 1;
-    private const int stIdleWall            = 2;
-    private const int stAir                 = 3;
-    private const int stMove                = 4;
-    private const int stJump                = 5;
-    private const int stJumpAir             = 6;
-    private const int stJumpWall            = 7;
-    private const int stJumpDown            = 8;
-    private const int stWallSliding         = 9;
-    private const int stLedgeHold           = 10;
-    private const int stLedgeClimb          = 11;
-    private const int stSit                 = 12;
-    private const int stHeadUp              = 13;
-    private const int stRoll                = 14;
-    private const int stDash                = 15;
-    private const int stTakeDown            = 16;
+    private const int stIdleBasic           = 0; // 정지(일반)
+    private const int stIdleLong            = 1; // 정지(장시간)
+    private const int stIdleWall            = 2; // 벽 붙기
+    private const int stAir                 = 3; // 체공
+    private const int stMove                = 4; // 바닥에서의 움직임
+    private const int stJump                = 5; // 점프(일반)
+    private const int stJumpAir             = 6; // 점프(공중)
+    private const int stJumpWall            = 7; // 점프(벽)
+    private const int stJumpDown            = 8; // 점프(하향)
+    private const int stWallSliding         = 9; // 벽 슬라이딩
+    private const int stLedgeHold           = 10; // 난간 잡기
+    private const int stLedgeClimb          = 11; // 난간 오르기
+    private const int stSit                 = 12; // 앉기
+    private const int stHeadUp              = 13; // 고개 들기
+    private const int stRoll                = 14; // 구르기
+    private const int stDash                = 15; // 대쉬
+    private const int stTakeDown            = 16; // 내려 찍기
 
     [Header("Player Constants")]
     // Idle related options
@@ -43,6 +43,7 @@ public class Player : Entity
     public int runningAccelFrame = 13;
 
     // Jump related options
+    public int continuousJumpCount = 1;
     public float jumpSpeed = 7.0f;
     public float airJumpSpeed = 7.0f;
     public float downJumpPreSpeed = 1.5f;
@@ -56,6 +57,7 @@ public class Player : Entity
     public int wallJumpForceFrame = 6;
 
     private DiscreteLinearGraph jumpGraph;
+    private DiscreteLinearGraph airJumpGraph;
 
     // WallSliding related options
     public float maxWallSlidingSpeed = 5.0f;
@@ -71,16 +73,20 @@ public class Player : Entity
     // Roll related options
     public float rollSpeed = 8.0f;
 
-    public int rollPreDashFrame = 6;
+    public int rollDashFrame = 6;
     public int rollInvincibilityFrame = 18;
     public int rollWakeUpFrame = 6;
     public int rollCoolFrame = 180;
+
+    private DiscreteLinearGraph rollGraph;
 
     // Dash related options
     public float dashSpeed = 8.0f;
 
     public int dashIdleFrame = 6;
     public int dashInvincibilityFrame = 9;
+
+    private DiscreteLinearGraph dashGraph;
 
     // TakeDown related options
     public float takeDownSpeed = 12.0f;
@@ -115,7 +121,10 @@ public class Player : Entity
 
     // Jump related options
     public bool isReleasedJumpKey;
+    public int leftContinuousJumpCount;
     public int leftJumpFrame;
+    public int leftAirJumpIdleFrame;
+    public int leftAirJumpFrame;
 
     // WallSliding related options
 
@@ -151,7 +160,7 @@ public class Player : Entity
         m_machine.SetCallbacks(stAir, Input_Air, Logic_Air, null, null);
         m_machine.SetCallbacks(stMove, Input_Move, Logic_Move, null, null);
         m_machine.SetCallbacks(stJump, Input_Jump, Logic_Jump, Enter_Jump, End_Jump);
-        m_machine.SetCallbacks(stJumpAir, null, null, null, null);
+        m_machine.SetCallbacks(stJumpAir, Input_JumpAir, Logic_JumpAir, Enter_JumpAir, End_JumpAir);
         m_machine.SetCallbacks(stJumpWall, null, null, null, null);
         m_machine.SetCallbacks(stWallSliding, null, null, null, null);
         m_machine.SetCallbacks(stLedgeHold, null, null, null, null);
@@ -166,6 +175,8 @@ public class Player : Entity
     private void m_SetGraphs()
     {
         jumpGraph = new DiscreteLinearGraph(jumpFrame);
+        airJumpGraph = new DiscreteLinearGraph(airJumpFrame);
+        rollGraph = new DiscreteLinearGraph(rollDashFrame);
     }
 
     #endregion
@@ -222,6 +233,31 @@ public class Player : Entity
         }
     }
 
+    private void Logic_JumpAir()
+    {
+        if(leftAirJumpIdleFrame > 0)
+        {
+            if(rigid.gravityScale != 0.0f)
+                rigid.gravityScale = 0.0f;
+
+            SetVelocity(0.0f, 0.0f);
+            leftAirJumpIdleFrame--;
+
+            if(leftAirJumpIdleFrame == 0)
+            {
+                leftAirJumpFrame = airJumpFrame;
+            }
+        }
+        else if(leftAirJumpFrame > 0)
+        {
+            if(rigid.gravityScale != 1.0f)
+                rigid.gravityScale = 1.0f;
+
+            SetVelocityX(xInput == 0 ? 0.0f : moveSpeed * lookingDirection);
+            SetVelocityY(airJumpSpeed * airJumpGraph[leftAirJumpFrame-- - 1]);
+        }
+    }
+
     #endregion
 
     #region State Transition Input Checker
@@ -236,7 +272,7 @@ public class Player : Entity
         jumpUp = InputHandler.data.jumpUp;
         jumpPressing = InputHandler.data.jumpPressing;
     }
-    
+
     #endregion
 
     #region State Transition Logics
@@ -301,6 +337,11 @@ public class Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
+        if(jumpDown && leftContinuousJumpCount > 0)
+        {
+            m_machine.ChangeState(stJumpAir);
+            return;
+        }
     }
 
     private void Input_Move()
@@ -324,16 +365,47 @@ public class Player : Entity
 
     private void Input_Jump()
     {
-        if(jumpDown /*&& leftContinuousJumpCount > 0*/)
+        if(jumpDown && leftContinuousJumpCount > 0)
         {
-            
+            m_machine.ChangeState(stJumpAir);
+            return;
         }
         if(jumpUp && !isReleasedJumpKey)
         {
             isReleasedJumpKey = true;
             leftJumpFrame /= 2;
+            return;
         }
         if(leftJumpFrame == 0)
+        {
+            m_machine.ChangeState(stAir);
+            return;
+        }
+    }
+
+    private void Input_JumpAir()
+    {
+        if(jumpDown && leftContinuousJumpCount > 0)
+        {
+            m_machine.ChangeState(stJumpAir);
+            return;
+        }
+        if(jumpUp && !isReleasedJumpKey)
+        {
+            if(leftAirJumpIdleFrame > 0)
+            {
+                leftAirJumpIdleFrame = 0;
+                leftAirJumpFrame = airJumpFrame / 2;
+            }
+            else
+            {
+                leftAirJumpFrame /= 2;
+            }
+
+            isReleasedJumpKey = true;
+            return;
+        }
+        if(leftAirJumpFrame == 0 && leftAirJumpIdleFrame == 0)
         {
             m_machine.ChangeState(stAir);
             return;
@@ -348,6 +420,9 @@ public class Player : Entity
     {
         rigid.gravityScale = 0.0f;
         currentIdleBasicFrame = 0;
+        leftContinuousJumpCount = continuousJumpCount;
+
+        // 선입력 체크
     }
 
     private void Enter_IdleLong()
@@ -357,8 +432,18 @@ public class Player : Entity
 
     private void Enter_Jump()
     {
+        leftContinuousJumpCount--;
         leftJumpFrame = jumpFrame;
         isReleasedJumpKey = false;
+    }
+
+    private void Enter_JumpAir()
+    {
+        leftContinuousJumpCount--;
+        leftAirJumpIdleFrame = airJumpIdleFrame;
+        leftAirJumpFrame = airJumpFrame;
+        isReleasedJumpKey = false;
+        rigid.gravityScale = 1.0f;
     }
 
     #endregion
@@ -380,6 +465,14 @@ public class Player : Entity
     {
         leftJumpFrame = 0;
         isReleasedJumpKey = false;
+    }
+
+    private void End_JumpAir()
+    {
+        leftAirJumpIdleFrame = 0;
+        leftAirJumpFrame = 0;
+        isReleasedJumpKey = false;
+        rigid.gravityScale = 1.0f;
     }
 
     #endregion

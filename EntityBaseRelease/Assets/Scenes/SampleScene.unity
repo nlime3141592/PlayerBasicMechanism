@@ -590,13 +590,14 @@ MonoBehaviour:
   glidingAccelFrameY: 39
   runningWeight: 1.2
   runningAccelFrame: 13
+  continuousJumpCount: 2
   jumpSpeed: 7
-  airJumpSpeed: 7
+  airJumpSpeed: 10
   downJumpPreSpeed: 1.5
   wallJumpSpeed: 7
-  jumpFrame: 13
+  jumpFrame: 39
   airJumpIdleFrame: 3
-  airJumpFrame: 13
+  airJumpFrame: 39
   downJumpPreFrame: 30
   wallJumpFrame: 13
   wallJumpForceFrame: 6
@@ -605,7 +606,7 @@ MonoBehaviour:
   sitCameraMoveFrame: 120
   headUpCameraMoveFrame: 120
   rollSpeed: 8
-  rollPreDashFrame: 6
+  rollDashFrame: 6
   rollInvincibilityFrame: 18
   rollWakeUpFrame: 6
   rollCoolFrame: 180
@@ -617,7 +618,10 @@ MonoBehaviour:
   takeDownPostIdleFrame: 12
   currentIdleBasicFrame: 0
   isReleasedJumpKey: 0
+  leftContinuousJumpCount: 0
   leftJumpFrame: 0
+  leftAirJumpIdleFrame: 0
+  leftAirJumpFrame: 0
 --- !u!50 &742006021
 Rigidbody2D:
   serializedVersion: 4
