@@ -70,6 +70,10 @@ public class Player : Entity
     private DiscreteLinearGraph wallSlidingGraph;
 
     // Ledge related options
+    [Range(0.1f, 2.0f)]
+    public float checkerTopOffset = 0.2f;
+    public float ledgeDetectingLength = 0.5f;
+    public float ledgeEntityDetectingLength = 0.04f;
 
     // Sit & HeadUp related options
     public int sitCameraMoveFrame = 120;
@@ -155,6 +159,14 @@ public class Player : Entity
     public int proceedWallSlidingFrame;
 
     // Ledge related options
+    public Vector2 ledgeCheckerBottom;
+    public Vector2 ledgeCheckerTop;
+    private RaycastHit2D hitBottomChecker;
+    private RaycastHit2D hitTopChecker;
+    public bool isOnLedge;
+    public Vector2 ledgeCornerPosition;
+    public bool isOnLedgeClimbEnd;
+    public bool isTeleportedPlayer;
 
     // Sit & HeadUp related options
     public int proceedSitFrame;
@@ -204,7 +216,7 @@ public class Player : Entity
         m_machine.SetCallbacks(stJumpWall, Input_JumpWall, Logic_JumpWall, Enter_JumpWall, End_JumpWall);
         m_machine.SetCallbacks(stWallSliding, Input_WallSliding, Logic_WallSliding, Enter_WallSliding, End_WallSliding);
         m_machine.SetCallbacks(stLedgeHold, null, null, null, null);
-        m_machine.SetCallbacks(stLedgeClimb, null, null, null, null);
+        m_machine.SetCallbacks(stLedgeClimb, Input_LedgeClimb, Logic_LedgeClimb, Enter_LedgeClimb, End_LedgeClimb);
         m_machine.SetCallbacks(stSit, Input_Sit, Logic_Sit, Enter_Sit, End_Sit);
         m_machine.SetCallbacks(stHeadUp, Input_HeadUp, Logic_HeadUp, Enter_HeadUp, End_HeadUp);
         m_machine.SetCallbacks(stRoll, Input_Roll, Logic_Roll, Enter_Roll, End_Roll);
@@ -225,7 +237,46 @@ public class Player : Entity
 
     #endregion
 
-    #region Physics Utilities
+    #region Physics Checker
+
+    protected void CheckLedge()
+    {
+        float bPosX, bPosY;
+        float tPosX, tPosY;
+
+        bPosX = ceilBox.bounds.max.x * lookingDirection;
+        bPosY = ceilBox.bounds.center.y;
+        tPosX = bPosX;
+        tPosY = bPosY + checkerTopOffset;
+
+        SetVector(ref ledgeCheckerBottom, bPosX, bPosY);
+        SetVector(ref ledgeCheckerTop, tPosX, tPosY);
+
+        hitBottomChecker = Physics2D.Raycast(ledgeCheckerBottom, Vector2.right * lookingDirection, ledgeDetectingLength, LayerInfo.groundMask);
+        RaycastHit2D hitFromTop = Physics2D.Raycast(ledgeCheckerTop, Vector2.right * lookingDirection, ledgeDetectingLength, LayerInfo.groundMask);
+
+        if(hitBottomChecker && !hitFromTop)
+        {
+            isOnLedge = true;
+
+            float xDistance = hitBottomChecker.distance + 0.02f;
+
+            tPosX = ledgeCheckerBottom.x + xDistance;
+            tPosY = ledgeCheckerBottom.y + checkerTopOffset;
+            SetVector(ref ledgeCheckerTop, tPosX, tPosY);
+
+            hitTopChecker = Physics2D.Raycast(ledgeCheckerTop, Vector2.down, checkerTopOffset + 0.1f, LayerInfo.groundMask);
+
+            if(hitTopChecker)
+            {
+                SetVector(ref ledgeCornerPosition, hitTopChecker.point.x, hitTopChecker.point.y);
+            }
+        }
+        else
+        {
+            isOnLedge = false;
+        }
+    }
 
     #endregion
 
@@ -234,6 +285,7 @@ public class Player : Entity
     protected override void FixedUpdate()
     {
         base.FixedUpdate();
+        CheckLedge();
 
         m_machine.UpdateLogic();
     }
@@ -373,7 +425,10 @@ public class Player : Entity
 
     private void Logic_LedgeClimb()
     {
-        
+        if(!isOnLedgeClimbEnd)
+        {
+            SetVelocity(0.0f, 0.0f);
+        }
     }
 
     private void Logic_Sit()
@@ -585,6 +640,11 @@ public class Player : Entity
 
     private void Input_Air()
     {
+        if(isOnLedge)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
         if(isOnGround)
         {
             m_machine.ChangeState(stIdleBasic);
@@ -638,6 +698,11 @@ public class Player : Entity
 
     private void Input_Jump()
     {
+        if(isOnLedge)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
         if(jumpDown && yNegative != 0)
         {
             m_machine.ChangeState(stTakeDown);
@@ -673,6 +738,11 @@ public class Player : Entity
 
     private void Input_JumpAir()
     {
+        if(isOnLedge)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
         if(jumpDown && yNegative != 0)
         {
             m_machine.ChangeState(stTakeDown);
@@ -724,6 +794,11 @@ public class Player : Entity
         }
         if (leftWallJumpFrame <= wallJumpFrame - wallJumpForceFrame)
         {
+            if(isOnLedge)
+            {
+                m_machine.ChangeState(stLedgeClimb);
+                return;
+            }
             if(jumpPressing && yNegative != 0)
             {
                 m_machine.ChangeState(stTakeDown);
@@ -780,12 +855,16 @@ public class Player : Entity
 
     private void Input_LedgeHold()
     {
-
+        // NOTE: 미구현, 혹시 필요할 경우에 이 곳에 작성해주면 된다.
     }
 
     private void Input_LedgeClimb()
     {
-
+        if(isOnLedgeClimbEnd)
+        {
+            m_machine.ChangeState(stIdleBasic);
+            return;
+        }
     }
 
     private void Input_Sit()
@@ -854,6 +933,11 @@ public class Player : Entity
         if(leftDashIdleFrame == 0 && leftDashInvincibilityFrame == 0)
         {
             m_machine.ChangeState(stAir);
+            return;
+        }
+        if(isOnLedge)
+        {
+            m_machine.ChangeState(stLedgeClimb);
             return;
         }
         if(isOnWallFeet == lookingDirection ^ isOnWallCeil == lookingDirection)
@@ -972,7 +1056,9 @@ public class Player : Entity
 
     private void Enter_LedgeClimb()
     {
-
+        rigid.gravityScale = 0.0f;
+        isOnLedgeClimbEnd = false;
+        isTeleportedPlayer = false;
     }
 
     private void Enter_Sit()
@@ -1067,7 +1153,17 @@ public class Player : Entity
 
     private void End_LedgeClimb()
     {
+        float fPosX = feetBox.bounds.center.x;
+        float fPosY = feetBox.bounds.min.y;
+        float cPosX = transform.position.x;
+        float cPosY = transform.position.y;
 
+        transform.position = new Vector2(ledgeCornerPosition.x + cPosX - fPosX, ledgeCornerPosition.y + cPosY - fPosY);
+        isOnLedge = false;
+
+        rigid.gravityScale = 1.0f;
+        isOnLedgeClimbEnd = false;
+        isTeleportedPlayer = false;
     }
 
     private void End_Sit()

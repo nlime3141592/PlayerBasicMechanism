@@ -718,6 +718,9 @@ MonoBehaviour:
   wallJumpForceFrame: 6
   maxWallSlidingSpeed: 1.2
   wallSlidingAccelFrame: 13
+  checkerTopOffset: 0.2
+  ledgeDetectingLength: 0.5
+  ledgeEntityDetectingLength: 0.04
   sitCameraMoveFrame: 120
   headUpCameraMoveFrame: 120
   rollSpeed: 8
@@ -742,6 +745,11 @@ MonoBehaviour:
   leftWallJumpFrame: 0
   currentJumpedWallDirection: 0
   proceedWallSlidingFrame: 0
+  ledgeCheckerBottom: {x: 0, y: 0}
+  ledgeCheckerTop: {x: 0, y: 0}
+  isOnLedge: 0
+  ledgeCornerPosition: {x: 0, y: 0}
+  isOnLedgeClimbEnd: 0
   proceedSitFrame: 0
   proceedHeadUpFrame: 0
   leftRollPreFrame: 0
@@ -1201,7 +1209,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1678964355}
   m_LocalRotation: {x: 0, y: 0, z: 0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: 14.25, y: 1.91, z: 0}
+  m_LocalPosition: {x: 14.25, y: -1.83, z: 0}
   m_LocalScale: {x: 15.1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
