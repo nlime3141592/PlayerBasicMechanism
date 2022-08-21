@@ -92,8 +92,8 @@ public static class InputHandler
         s_m_data.yNegDown = Input.GetKeyDown(keys[idx_Sit]);
         s_m_data.yNegUp = Input.GetKeyUp(keys[idx_Sit]);
         s_m_data.yPosDown = Input.GetKeyDown(keys[idx_HeadUp]);
-        s_m_data.yPosUp = Input.GetKeyUp(keys[idx_Sit]);
-        s_m_data.yNegative = Input.GetKey(keys[idx_MoveRight]) ? -1 : 0;
+        s_m_data.yPosUp = Input.GetKeyUp(keys[idx_HeadUp]);
+        s_m_data.yNegative = Input.GetKey(keys[idx_Sit]) ? -1 : 0;
         s_m_data.yPositive = Input.GetKey(keys[idx_HeadUp]) ? 1 : 0;
         s_m_data.yInput = s_m_data.yNegative + s_m_data.yPositive;
 
