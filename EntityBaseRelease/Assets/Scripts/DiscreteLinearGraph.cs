@@ -1,29 +1,11 @@
 using System;
 
-public class DiscreteLinearGraph
+public class DiscreteLinearGraph : DiscreteGraph
 {
-    public int length { get; private set; }
+    public DiscreteLinearGraph(int length) : base(length) {}
 
-    public float this[int index]
+    protected override float ArithmeticFunction(float domain_x)
     {
-        get => m_values[index];
-    }
-
-    private float[] m_values;
-
-    public DiscreteLinearGraph(int length)
-    {
-        int i;
-        int l = length - 1;
-        float x;
-
-        this.length = length;
-        m_values = new float[length];
-
-        for(i = 0; i <= l; i++)
-        {
-            x = i;
-            m_values[i] = (float)x / l;
-        }
+        return domain_x / (length - 1);
     }
 }

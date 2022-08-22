@@ -12,7 +12,10 @@ public class Player : Entity
     private const int stIdleLong            = 1; // 정지(장시간)
     private const int stIdleWall            = 2; // 벽 붙기
     private const int stAir                 = 3; // 체공
+    private const int stGliding             = 17; // 글라이딩
     private const int stMove                = 4; // 바닥에서의 움직임
+    private const int stMoveWalk            = 18; // 바닥에서의 움직임(걷기)
+    private const int stMoveRun             = 19; // 바닥에서의 움직임(달리기)
     private const int stJump                = 5; // 점프(일반)
     private const int stJumpAir             = 6; // 점프(공중)
     private const int stJumpWall            = 7; // 점프(벽)
@@ -206,6 +209,7 @@ public class Player : Entity
     {
         m_machine = new StateMachine(stIdleBasic);
 
+        // (상태 이름, 상태 전이 조건, 상태에서 수행할 로직, 상태가 시작될 때 수행하는 로직, 상태가 끝날 때 수행하는 로직)
         m_machine.SetCallbacks(stIdleBasic, Input_IdleBasic, Logic_IdleBasic, Enter_IdleBasic, End_IdleBasic);
         m_machine.SetCallbacks(stIdleLong, Input_IdleLong, Logic_IdleLong, Enter_IdleLong, End_IdleLong);
         m_machine.SetCallbacks(stIdleWall, Input_IdleWall, Logic_IdleWall, Enter_IdleWall, End_IdleWall);
@@ -214,6 +218,7 @@ public class Player : Entity
         m_machine.SetCallbacks(stJump, Input_Jump, Logic_Jump, Enter_Jump, End_Jump);
         m_machine.SetCallbacks(stJumpAir, Input_JumpAir, Logic_JumpAir, Enter_JumpAir, End_JumpAir);
         m_machine.SetCallbacks(stJumpWall, Input_JumpWall, Logic_JumpWall, Enter_JumpWall, End_JumpWall);
+        m_machine.SetCallbacks(stJumpDown, null, null, null, null);
         m_machine.SetCallbacks(stWallSliding, Input_WallSliding, Logic_WallSliding, Enter_WallSliding, End_WallSliding);
         m_machine.SetCallbacks(stLedgeHold, null, null, null, null);
         m_machine.SetCallbacks(stLedgeClimb, Input_LedgeClimb, Logic_LedgeClimb, Enter_LedgeClimb, End_LedgeClimb);

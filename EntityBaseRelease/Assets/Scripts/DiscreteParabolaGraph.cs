@@ -1,29 +1,12 @@
 using System;
 
-public class DiscreteParabolaGraph
+public class DiscreteParabolaGraph : DiscreteGraph
 {
-    public int length { get; private set; }
+    public DiscreteParabolaGraph(int length) : base(length) {}
 
-    public float this[int index]
+    protected override float ArithmeticFunction(float domain_x)
     {
-        get => m_values[index];
-    }
-
-    private float[] m_values;
-
-    public DiscreteParabolaGraph(int length)
-    {
-        int i;
-        int l = length - 1;
-        float x;
-
-        this.length = length;
-        m_values = new float[length];
-
-        for(i = 0; i <= l; i++)
-        {
-            x = i;
-            m_values[i] = x * (2 * l - x) / (l * l);
-        }
+        float l = length - 1;
+        return domain_x * (2 * l - domain_x) / (l * l);
     }
 }
