@@ -62,12 +62,13 @@ public class __Player : Entity
     private DiscreteGraph runAccelGraph;
 
     // JumpBasic options
-    public int maxJumpCount = 1;
+    public int maxJumpBasicCount = 1;
     public float jumpBasicSpeed = 7.0f;
     public int jumpBasicDeaccelFrame = 13;
     private DiscreteGraph jumpBasicDeaccelGraph;
 
     // JumpAir options
+    public int maxJumpAirCount = 1;
     public float jumpAirSpeed = 8.0f;
     public int jumpAirIdleFrame = 3;
     public int jumpAirDeaccelFrame = 13;
@@ -149,10 +150,11 @@ public class __Player : Entity
     public int proceedRunAccelFrame;
 
     // JumpBasic options
-    public int leftJumpCount;
+    public int leftJumpBasicCount;
     public int leftJumpBasicDeaccelFrame;
 
     // JumpAir options
+    public int leftJumpAirCount;
     public int leftJumpAirIdleFrame;
     public int leftJumpAirDeaccelFrame;
         
@@ -215,24 +217,24 @@ public class __Player : Entity
     {
         m_machine = new StateMachine(stIdleBasic);
 
-        m_machine.SetCallbacks(stIdleBasic, Input_IdleBasic, Logic_IdleBasic, Enter_IdleBasic, End_IdleBasic);
-        m_machine.SetCallbacks(stIdleLong, Input_IdleLong, Logic_IdleLong, Enter_IdleLong, End_IdleLong);
-        m_machine.SetCallbacks(stIdleWall, null, null, null, null);
-        m_machine.SetCallbacks(stAir, Input_Air, Logic_Air, Enter_Air, End_Air);
-        m_machine.SetCallbacks(stGliding, null, null, null, null);
-        m_machine.SetCallbacks(stMoveWalk, Input_MoveWalk, Logic_MoveWalk, Enter_MoveWalk, null);
-        m_machine.SetCallbacks(stMoveRun, Input_MoveRun, Logic_MoveRun, Enter_MoveRun, End_MoveRun);
-        m_machine.SetCallbacks(stJumpBasic, null, null, null, null);
-        m_machine.SetCallbacks(stJumpAir, null, null, null, null);
-        m_machine.SetCallbacks(stJumpWall, null, null, null, null);
-        m_machine.SetCallbacks(stJumpDown, null, null, null, null);
-        m_machine.SetCallbacks(stWallSliding, null, null, null, null);
-        m_machine.SetCallbacks(stLedgeClimb, null, null, null, null);
-        m_machine.SetCallbacks(stSit, Input_Sit, Logic_Sit, Enter_Sit, End_Sit);
-        m_machine.SetCallbacks(stHeadUp, Input_HeadUp, Logic_HeadUp, Enter_HeadUp, End_HeadUp);
-        m_machine.SetCallbacks(stRoll, null, null, null, null);
-        m_machine.SetCallbacks(stDash, null, null, null, null);
-        m_machine.SetCallbacks(stTakeDown, null, null, null, null);
+        m_machine.SetCallbacks(stIdleBasic, Input_IdleBasic, Logic_IdleBasic, Enter_IdleBasic, End_IdleBasic); // 완성
+        m_machine.SetCallbacks(stIdleLong, Input_IdleLong, Logic_IdleLong, Enter_IdleLong, End_IdleLong); // 완성
+        m_machine.SetCallbacks(stIdleWall, Input_IdleWall, null, Enter_IdleWall, null);
+        m_machine.SetCallbacks(stAir, Input_Air, Logic_Air, Enter_Air, End_Air); // 완성
+        m_machine.SetCallbacks(stGliding, Input_Gliding, null, null, null);
+        m_machine.SetCallbacks(stMoveWalk, Input_MoveWalk, Logic_MoveWalk, Enter_MoveWalk, null); // 완성
+        m_machine.SetCallbacks(stMoveRun, Input_MoveRun, Logic_MoveRun, Enter_MoveRun, End_MoveRun); // 완성
+        m_machine.SetCallbacks(stJumpBasic, Input_JumpBasic, null, null, null);
+        m_machine.SetCallbacks(stJumpAir, Input_JumpAir, null, null, null);
+        m_machine.SetCallbacks(stJumpWall, Input_JumpWall, null, null, null);
+        m_machine.SetCallbacks(stJumpDown, Input_JumpDown, null, null, null);
+        m_machine.SetCallbacks(stWallSliding, Input_WallSliding, null, null, null);
+        m_machine.SetCallbacks(stLedgeClimb, Input_LedgeClimb, null, null, null);
+        m_machine.SetCallbacks(stSit, Input_Sit, Logic_Sit, Enter_Sit, End_Sit); // 완성
+        m_machine.SetCallbacks(stHeadUp, Input_HeadUp, Logic_HeadUp, Enter_HeadUp, End_HeadUp); // 완성
+        m_machine.SetCallbacks(stRoll, Input_Roll, null, null, null);
+        m_machine.SetCallbacks(stDash, Input_Dash, null, null, null);
+        m_machine.SetCallbacks(stTakeDown, Input_TakeDown, null, null, null);
     }
 
     private void m_SetGraphs()
@@ -346,181 +348,80 @@ public class __Player : Entity
 
     #endregion
 
-    #region State Changer
-
-    private bool CanChangeToIdleLong()
-    {
-        return proceedLongIdleTransitionFrame >= longIdleTransitionFrame;
-    }
-
-    private bool CanChangeToIdleWall()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (!isDetectedGround);
-        isCanChange &= (inputData.xInput != 0);
-        isCanChange &= (inputData.xInput == lookingDirection);
-        isCanChange &= (isOnWallFeet == lookingDirection);
-        isCanChange &= (isOnWallCeil == lookingDirection);
-        isCanChange &= (inputData.yNegative == 0);
-
-        return isCanChange;
-    }
-
-    // NOTE:
-    // CanChangeToAir()를 구현하지 않은 이유
-    // 다양한 상태에서 다양한 조건에 의해 stAir로 상태전이 할 수 있어서 Air는 Input_XXX 함수 내부에서 자체적으로 구현함.
-
-    private bool CanChangeToGliding()
-    {
-        return inputData.yPositive != 0;
-    }
-
-    private bool CanChangeToMoveWalk()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (!isRunState);
-        isCanChange &= (inputData.xInput != 0);
-        
-        return isCanChange;
-    }
-
-    private bool CanChangeToMoveRun()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (isRunState);
-        isCanChange &= (inputData.xInput != 0);
-        
-        return isCanChange;
-    }
-
-    private bool CanChangeToJumpBasic()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (inputData.jumpDown);
-        isCanChange &= (isOnGround);
-        isCanChange &= (leftJumpCount > 0);
-
-        return isCanChange;
-    }
-
-    private bool CanChangeToJumpAir()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (inputData.jumpDown);
-        isCanChange &= (leftJumpCount  > 0);
-
-        return isCanChange;
-    }
-
-    private bool CanChangeToJumpWall()
-    {
-        return inputData.jumpDown;
-    }
-
-    private bool CanChangeToWallSliding()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (inputData.xInput == 0);
-        isCanChange &= (isOnWallFeet == lookingDirection);
-        isCanChange &= (isOnWallCeil == lookingDirection);
-
-        return isCanChange;
-    }
-
-    private bool CanChangeToLedgeClimb()
-    {
-        return isOnLedge;
-    }
-
-    private bool CanChangeToSit()
-    {
-        return inputData.yNegative != 0;
-    }
-
-    private bool CanChangeToHeadUp()
-    {
-        return inputData.yPositive != 0;
-    }
-
-    private bool CanChangeToRoll()
-    {
-        return inputData.dashDown;
-    }
-
-    private bool CanChangeToDash()
-    {
-        return inputData.dashDown;
-    }
-
-    private bool CanChangeToTakeDown()
-    {
-        bool isCanChange = true;
-
-        isCanChange &= (inputData.yNegative != 0);
-        isCanChange &= (inputData.jumpPressing);
-
-        return isCanChange;
-    }
-
-    #endregion
-
     #region Implement State; stIdleBasic
 
     private void Enter_IdleBasic()
     {
         rigid.gravityScale = 0.0f;
-        leftJumpCount = maxJumpCount;
+        leftJumpBasicCount = maxJumpBasicCount;
         leftDashCount = maxDashCount;
+
+        // 선입력 프레임 수
+        int bufferedFrame = 6;
+        int i;
+        InputData idat;
+
+        for(i = 0; i < bufferedFrame; i++)
+        {
+            idat = InputBuffer.GetBufferedData(i);
+
+            if(idat.jumpPressing && leftJumpBasicCount > 0)
+            {
+                m_machine.ChangeState(stJumpBasic);
+                break;
+            }
+            if(idat.dashPressing)
+            {
+                m_machine.ChangeState(stRoll);
+                break;
+            }
+            if(idat.yNegative != 0)
+            {
+                m_machine.ChangeState(stSit);
+                break;
+            }
+        }
     }
 
     private void Input_IdleBasic()
     {
-        // 체공, 장시간대기, 앉기, 고개들기, 점프, 구르기, 달리기, 걷기
-
         if(!isDetectedGround)
         {
             m_machine.ChangeState(stAir);
             return;
         }
-        if(CanChangeToIdleLong())
+        if(proceedLongIdleTransitionFrame == longIdleTransitionFrame)
         {
             m_machine.ChangeState(stIdleLong);
             return;
         }
-        if(CanChangeToSit())
+        if(inputData.yNegative != 0)
         {
             m_machine.ChangeState(stSit);
             return;
         }
-        if(CanChangeToHeadUp())
+        if(inputData.yPositive != 0)
         {
             m_machine.ChangeState(stHeadUp);
             return;
         }
-        if(CanChangeToJumpBasic())
+        if(inputData.jumpDown && leftJumpBasicCount > 0)
         {
             m_machine.ChangeState(stJumpBasic);
             return;
         }
-        if(CanChangeToRoll())
+        if(inputData.dashDown && leftRollCoolFrame == 0)
         {
             m_machine.ChangeState(stRoll);
             return;
         }
-        if(CanChangeToMoveRun())
+        if(inputData.xInput != 0)
         {
-            m_machine.ChangeState(stMoveRun);
-            return;
-        }
-        if(CanChangeToMoveWalk())
-        {
-            m_machine.ChangeState(stMoveWalk);
+            if(isRunState)
+                m_machine.ChangeState(stMoveRun);
+            else
+                m_machine.ChangeState(stMoveWalk);
+
             return;
         }
     }
@@ -552,35 +453,38 @@ public class __Player : Entity
 
     private void Input_IdleLong()
     {
-        // 체공, 앉기, 고개들기, 점프, 구르기, 달리기, 걷기
         if(!isDetectedGround)
         {
             m_machine.ChangeState(stAir);
             return;
         }
-        if(CanChangeToSit())
+        if(inputData.yNegative != 0)
         {
             m_machine.ChangeState(stSit);
             return;
         }
-        if(CanChangeToHeadUp())
+        if(inputData.yPositive != 0)
         {
             m_machine.ChangeState(stHeadUp);
             return;
         }
-        if(CanChangeToRoll())
+        if(inputData.jumpDown && leftJumpBasicCount > 0)
+        {
+            m_machine.ChangeState(stJumpBasic);
+            return;
+        }
+        if(inputData.dashDown && leftRollCoolFrame == 0)
         {
             m_machine.ChangeState(stRoll);
             return;
         }
-        if(CanChangeToMoveRun())
+        if(inputData.xInput != 0)
         {
-            m_machine.ChangeState(stMoveRun);
-            return;
-        }
-        if(CanChangeToMoveWalk())
-        {
-            m_machine.ChangeState(stMoveWalk);
+            if(isRunState)
+                m_machine.ChangeState(stMoveRun);
+            else
+                m_machine.ChangeState(stMoveWalk);
+
             return;
         }
     }
@@ -599,6 +503,44 @@ public class __Player : Entity
 
     #region Implement State; stIdleWall
 
+    private void Enter_IdleWall()
+    {
+        // 선입력 프레임 수
+        int bufferedFrame = 6;
+        int i;
+        InputData idat;
+
+        for(i = 0; i < bufferedFrame; i++)
+        {
+            idat = InputBuffer.GetBufferedData(i);
+
+            if(idat.jumpPressing)
+            {
+                m_machine.ChangeState(stJumpWall);
+                break;
+            }
+        }
+    }
+
+    private void Input_IdleWall()
+    {
+        if(isOnWallFeet == 0 || isOnWallCeil == 0 || inputData.yNegDown)
+        {
+            m_machine.ChangeState(stAir);
+            return;
+        }
+        if(inputData.xInput == 0)
+        {
+            m_machine.ChangeState(stWallSliding);
+            return;
+        }
+        if(inputData.jumpDown)
+        {
+            m_machine.ChangeState(stJumpWall);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stAir
@@ -609,8 +551,8 @@ public class __Player : Entity
 
         rigid.gravityScale = 1.0f;
 
-        if(leftJumpCount == maxJumpCount)
-            leftJumpCount--;
+        if(leftJumpBasicCount == maxJumpBasicCount)
+            leftJumpBasicCount--;
 
         if(currentVelocity.y >= 0)
         {
@@ -631,6 +573,21 @@ public class __Player : Entity
                 }
             }
         }
+
+        // 선입력 프레임 수
+        int bufferedFrame = 6;
+        InputData idat;
+
+        for(i = 0; i < bufferedFrame; i++)
+        {
+            idat = InputBuffer.GetBufferedData(i);
+
+            if(idat.jumpPressing && leftJumpAirCount > 0)
+            {
+                m_machine.ChangeState(stJumpAir);
+                break;
+            }
+        }
     }
 
     private void Input_Air()
@@ -640,32 +597,32 @@ public class __Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
-        if(CanChangeToJumpAir())
+        if(inputData.jumpDown && leftJumpAirCount > 0)
         {
             m_machine.ChangeState(stJumpAir);
             return;
         }
-        if(CanChangeToDash())
+        if(inputData.dashDown && leftDashCount > 0)
         {
             m_machine.ChangeState(stDash);
             return;
         }
-        if(CanChangeToGliding())
+        if(inputData.yPositive != 0)
         {
             m_machine.ChangeState(stGliding);
             return;
         }
-        if(CanChangeToTakeDown())
+        if(inputData.yNegative != 0 && inputData.jumpPressing)
         {
             m_machine.ChangeState(stTakeDown);
             return;
         }
-        if(CanChangeToIdleWall())
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
         {
             m_machine.ChangeState(stIdleWall);
             return;
         }
-        if(CanChangeToLedgeClimb())
+        if(isOnLedge && inputData.xInput == lookingDirection)
         {
             m_machine.ChangeState(stLedgeClimb);
             return;
@@ -701,6 +658,40 @@ public class __Player : Entity
 
     #region Implement State; stGliding
 
+    private void Input_Gliding()
+    {
+        if(inputData.yPositive == 0)
+        {
+            m_machine.ChangeState(stAir);
+            return;
+        }
+        if(isOnGround)
+        {
+            m_machine.ChangeState(stIdleBasic);
+            return;
+        }
+        if(inputData.jumpDown && leftJumpAirCount > 0)
+        {
+            m_machine.ChangeState(stJumpAir);
+            return;
+        }
+        if(inputData.dashDown && leftDashCount > 0)
+        {
+            m_machine.ChangeState(stDash);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+        if(isOnLedge && inputData.xInput == lookingDirection)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stMoveWalk
@@ -712,7 +703,6 @@ public class __Player : Entity
 
     private void Input_MoveWalk()
     {
-        // 체공, 대기, 앉기, 고개들기, 점프, 구르기, 달리기
         if(!isDetectedGround)
         {
             m_machine.ChangeState(stAir);
@@ -723,27 +713,27 @@ public class __Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
-        if(CanChangeToSit())
+        if(inputData.yNegative != 0)
         {
             m_machine.ChangeState(stSit);
             return;
         }
-        if(CanChangeToHeadUp())
+        if(inputData.yPositive != 0)
         {
             m_machine.ChangeState(stHeadUp);
             return;
         }
-        if(CanChangeToJumpBasic())
+        if(inputData.jumpDown && leftJumpBasicCount > 0)
         {
             m_machine.ChangeState(stJumpBasic);
             return;
         }
-        if(CanChangeToRoll())
+        if(inputData.dashDown && leftRollCoolFrame == 0)
         {
             m_machine.ChangeState(stRoll);
             return;
         }
-        if(CanChangeToMoveRun())
+        if(isRunState)
         {
             m_machine.ChangeState(stMoveRun);
             return;
@@ -767,7 +757,6 @@ public class __Player : Entity
 
     private void Input_MoveRun()
     {
-        // 체공, 대기, 앉기, 고개들기, 점프, 구르기, 달리기
         if(!isDetectedGround)
         {
             m_machine.ChangeState(stAir);
@@ -778,27 +767,27 @@ public class __Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
-        if(CanChangeToSit())
+        if(inputData.yNegative != 0)
         {
             m_machine.ChangeState(stSit);
             return;
         }
-        if(CanChangeToHeadUp())
+        if(inputData.yPositive != 0)
         {
             m_machine.ChangeState(stHeadUp);
             return;
         }
-        if(CanChangeToJumpBasic())
+        if(inputData.jumpDown && leftJumpBasicCount > 0)
         {
             m_machine.ChangeState(stJumpBasic);
             return;
         }
-        if(CanChangeToRoll())
+        if(inputData.dashDown && leftRollCoolFrame == 0)
         {
             m_machine.ChangeState(stRoll);
             return;
         }
-        if(CanChangeToMoveWalk())
+        if(!isRunState)
         {
             m_machine.ChangeState(stMoveWalk);
             return;
@@ -822,25 +811,179 @@ public class __Player : Entity
 
     #region Implement State; stJumpBasic
 
+    private void Input_JumpBasic()
+    {
+        if((currentVelocity.y <= 0.0f && leftJumpBasicDeaccelFrame == 0) || isOnCeil)
+        {
+            if(inputData.yPositive == 0)
+                m_machine.ChangeState(stAir);
+            else
+                m_machine.ChangeState(stGliding);
+
+            return;
+        }
+        if(inputData.jumpDown && leftJumpAirCount > 0)
+        {
+            m_machine.ChangeState(stJumpAir);
+            return;
+        }
+        if(inputData.dashDown && leftDashCount > 0)
+        {
+            m_machine.ChangeState(stDash);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+        if(inputData.yNegative != 0 && inputData.jumpPressing)
+        {
+            m_machine.ChangeState(stTakeDown);
+            return;
+        }
+        if(isOnLedge && inputData.xInput == lookingDirection)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stJumpAir
+
+    private void Input_JumpAir()
+    {
+        if((currentVelocity.y <= 0.0f && leftJumpAirDeaccelFrame == 0) || isOnCeil)
+        {
+            if(inputData.yPositive == 0)
+                m_machine.ChangeState(stAir);
+            else
+                m_machine.ChangeState(stGliding);
+
+            return;
+        }
+        if(inputData.jumpDown && leftJumpAirCount > 0)
+        {
+            m_machine.RestartState();
+            return;
+        }
+        if(inputData.dashDown && leftDashCount > 0)
+        {
+            m_machine.ChangeState(stDash);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+        if(inputData.yNegative != 0 && inputData.jumpPressing)
+        {
+            m_machine.ChangeState(stTakeDown);
+            return;
+        }
+        if(isOnLedge && inputData.xInput == lookingDirection)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
+    }
 
     #endregion
 
     #region Implement State; stJumpWall
 
+    private void Input_JumpWall()
+    {
+        if(leftJumpWallForceFrame != 0)
+            return;
+
+        if((currentVelocity.y <= 0.0f && leftJumpWallDeaccelFrame == 0) || isOnCeil)
+        {
+            if(inputData.yPositive == 0)
+                m_machine.ChangeState(stAir);
+            else
+                m_machine.ChangeState(stGliding);
+
+            return;
+        }
+        if(inputData.jumpDown && leftJumpAirCount > 0)
+        {
+            m_machine.RestartState();
+            return;
+        }
+        if(inputData.dashDown && leftDashCount > 0)
+        {
+            m_machine.ChangeState(stDash);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+        if(inputData.yNegative != 0 && inputData.jumpPressing)
+        {
+            m_machine.ChangeState(stTakeDown);
+            return;
+        }
+        if(isOnLedge && inputData.xInput == lookingDirection)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stJumpDown
+
+    private void Input_JumpDown()
+    {
+        // TODO: 보류
+    }
 
     #endregion
 
     #region Implement State; stWallSliding
 
+    private void Input_WallSliding()
+    {
+        if(isOnWallFeet == 0 || isOnWallCeil == 0 || inputData.yNegDown)
+        {
+            m_machine.ChangeState(stAir);
+        }
+        if(isDetectedGround)
+        {
+            m_machine.ChangeState(stIdleBasic);
+            return;
+        }
+        if(inputData.jumpDown)
+        {
+            m_machine.ChangeState(stJumpWall);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stLedgeClimb
+
+    private void Input_LedgeClimb()
+    {
+        if(isEndOfLedgeAnimation)
+        {
+            m_machine.ChangeState(stIdleBasic);
+            return;
+        }
+    }
 
     #endregion
 
@@ -864,8 +1007,18 @@ public class __Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
-        // TODO: 아래점프, 위점프 구현
-        if(CanChangeToRoll())
+        if(inputData.jumpDown)
+        {
+            if(detectedThroughableGround)
+            {
+                m_machine.ChangeState(stJumpDown);
+            }
+            else
+            {
+                m_machine.ChangeState(stJumpBasic);
+            }
+        }
+        if(inputData.dashDown)
         {
             m_machine.ChangeState(stRoll);
             return;
@@ -907,8 +1060,12 @@ public class __Player : Entity
             m_machine.ChangeState(stIdleBasic);
             return;
         }
-        // TODO: 위점프 구현
-        if(CanChangeToRoll())
+        if(inputData.jumpDown && leftJumpBasicCount > 0)
+        {
+            m_machine.ChangeState(stJumpBasic);
+            return;
+        }
+        if(inputData.dashDown)
         {
             m_machine.ChangeState(stRoll);
             return;
@@ -932,13 +1089,63 @@ public class __Player : Entity
 
     #region Implement State; stRoll
 
+    private void Input_Roll()
+    {
+        if(!isDetectedGround)
+        {
+            m_machine.ChangeState(stAir);
+            return;
+        }
+        if(leftRollPreparingFrame == 0 && leftRollInvincibilityFrame == 0 && leftRollWakeUpFrame == 0)
+        {
+            m_machine.ChangeState(stIdleBasic);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stDash
 
+    private void Input_Dash()
+    {
+        if(leftDashIdleFrame == 0 && leftDashInvincibilityFrame == 0)
+        {
+            m_machine.ChangeState(stAir);
+            return;
+        }
+        if(isOnLedge && inputData.xInput == lookingDirection)
+        {
+            m_machine.ChangeState(stLedgeClimb);
+            return;
+        }
+        if(!isDetectedGround && inputData.xInput == lookingDirection && isOnWallFeet == lookingDirection && isOnWallCeil == lookingDirection && inputData.yNegative == 0)
+        {
+            m_machine.ChangeState(stIdleWall);
+            return;
+        }
+    }
+
     #endregion
 
     #region Implement State; stTakeDown
+
+    private void Input_TakeDown()
+    {
+        if(isOnLandingAfterTakeDown)
+        {
+            if(!isDetectedGround)
+            {
+                m_machine.ChangeState(stAir);
+                return;
+            }
+            if(leftTakeDownLandingIdleFrame > 0)
+            {
+                m_machine.ChangeState(stIdleBasic);
+                return;
+            }
+        }
+    }
 
     #endregion
 }

@@ -24,6 +24,8 @@ public class Entity : MonoBehaviour
     protected RaycastHit2D detectedGround;
     protected bool isDetectedGround;
     protected bool isOnGround;
+    protected bool isDetectedCeil;
+    protected bool isOnCeil;
     protected Vector2 moveDirection;
     protected int lookingDirection;
 

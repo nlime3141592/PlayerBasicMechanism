@@ -56,6 +56,15 @@ class StateMachine
             m_enters[m_state]();
     }
 
+    public void RestartState()
+    {
+        if(m_ends[m_state] != null)
+            m_ends[m_state]();
+
+        if(m_enters[m_state] != null)
+            m_enters[m_state]();
+    }
+
     public void UpdateInput()
     {
         if(m_inputs[m_state] != null)
