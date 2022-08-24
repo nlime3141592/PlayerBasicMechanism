@@ -157,6 +157,11 @@ public class Entity : MonoBehaviour
         SetVector(ref moveDirection, dir.x, dir.y);
     }
 
+    protected void CheckCeil()
+    {
+
+    }
+
     protected void CheckDetectingWall()
     {
         float fPosX = 0.0f;
@@ -232,6 +237,7 @@ public class Entity : MonoBehaviour
             lookingDirection = 1;
 
         CheckGround();
+        CheckCeil();
         CheckDetectingWall();
         CheckHittingWall(detectedWallFeet, isDetectedWallFeet, ref isOnWallFeet);
         CheckHittingWall(detectedWallCeil, isDetectedWallCeil, ref isOnWallCeil);
